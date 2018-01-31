@@ -222,3 +222,122 @@
    - type="radio"：表示一个单选输入框。
 
    > 需要注意的是，在name属性中，要指定单选标识，用来确定哪几个单选输入框做为一个单选项。具有相同name值的输入框组成一组单选操作。value是单选的数据值，当用户单选对应输入框后，其value值做为数据值传给name，以name=value的形式发送出去。
+
+7. Lesson2学习代码
+
+   ```html
+   <!DOCTYPE html>
+   <html>
+   <head>
+     <title></title>
+     <style type="text/css">
+       *{
+         margin: 0
+         padding:0;
+       }
+       ul{
+         list-style: none;
+       }
+       li{
+         margin: 0 10px;
+         float: left;
+         color: #f40;
+         font-weight: bold;
+         font-size: 14px
+         height:25px;
+         line-height:25px;
+       }
+       li:hover{
+         border-radius: 15px;
+         background-color:#f40;
+         color:#fff;
+       }
+     </style>
+   </head>
+   <body>
+     我       很帅
+     <div style="">
+       HTML几个有用的特殊编码：
+       空格文本的展示形式：&nbsp；
+       div设置了块大小后，根据空格来区分单词等内容的个数，并基于个数进行div的块内换行。
+       但如果不用空格的话，很多单词相互连接，div不能区分出单词个数，因此会在div块内一行显示
+       在div内，它认为没有空格就只是一个单词，不会换行显示，会直接显示在一行上，有越界出div块的可能
+
+       空格分隔符：&nbsp；在HTML中，空格的含义是文字分隔符。代表一个空格文本。
+
+       我&nbsp；&nbsp；&nbsp；&nbsp；&nbsp；&nbsp；很帅
+
+       接下来，我要给大家讲解一个标签，叫<div>: &lt;div&gt;
+
+       如何把<>替换掉，使<div>原样输出：&lt;(less than),&gt;(great than)
+
+     </div>
+
+     回车换行符：<br>,它是一个标签，不是一个特殊的HTML编码。多个br表示多个换行。
+     单标签，双标签：每一个标签的意义在于把它包裹的文本修饰成需要的样子，但有些标签自己代表功能，不需要在它其中包裹修饰什么内容。这样的自己代表功能，没有包裹的叫做单标签。
+     单标签：<meta> <br>
+
+     有序标签：
+     type属性有五种值可以选1/a／A／i／I，指定排序序号的样式，type=a表示用26字母进行排序，type=i表示用罗马数字排序
+     reversed：逆序排序
+     start：指定从第几开始排序，
+     <ol type="1" reversed="reversed" start="2">
+       <li>marvel</li>
+       <li>su 8</li>
+       <li>返老还童</li>
+       <li>marvel</li>
+     </ol>
+
+     无序列表：在使用场景上，多用来做导航栏等具有父子结构的
+     只有一个type属性，默认值是disc，表示实心圈，circle是空心圈
+     <ul type="circle">
+       <li>天猫</li>
+       <li>聚划算</li>
+       <li>天猫超市</li>
+     </ul>
+
+     图片标签；
+     src:source,图片的资源地址
+       1. 网上url地址
+       2. 本地的绝对路径
+       3. 本地的相对路径：图片和html在同一个文件夹下，它们具有相对关系，可以使用相对路径。如果图片和html不在一个文件夹，即使是父子关系的地址，也不能使用相对地址，必须使用绝对地址。
+     <img src="" alt="" title="">
+     alt属性：图片占位符，文字叙述图片，在图片加载不成功时，展示文字信息。
+     title属性：图片提示符，鼠标移到图片上会提示图片提示符信息。
+
+     超链接标签：anchor
+     <a href="https://www.baidu.com">www.baidu.com</a>
+     href：hyperText reference，超文本引用。用来设置链接的目标地址
+     在a标签中包裹的任何内容都可以作为一个超链接的用户点击符。
+     target属性：_blank，超链接在新的标签页中打开
+     a标签最开始的功能，不是作为超链接，而是作为锚点，置顶功能、目录功能就是这样做的
+     a标签的另一个功能，打电话，发邮件
+     <a href="tel:18896937086">打电话</a>，如果是手机版的话，会直接调用手机的打电话接口，给tel中的号码打过去。
+     <a href="mailto:550457901@qq.com">发邮件</a>
+     a标签的另一个功能，协议限定符
+     <a href="javascriptl：">点我试试呀</a>，会强行调用href中的javascript代码。
+
+     表单标签：可以发送数据
+     发送数据需要数据名和数据值，即key+value的结构。
+     input标签在输入中会将接受到的内容作为value，
+     name属性的值作为数据名key，
+     value属性如果有值的话，会作为input的提示默认值。用户输入数据后，value是用户输入的值。
+     onfocus:当鼠标聚焦输入框时
+     onblur：当鼠标离开输入框时
+     <form method="get/post" action="要把数据发送到的地址">
+         <p>
+           username:<input type="text" name="username" value="输入用户名" onfocus="" onblur="">
+         </p>
+         <p>
+           password:<input type="password" name="password">
+         </p>
+         通常密码会使用md5加密，是不可逆的。
+         2g数据是不加密的，3/4g会加密数据
+         <input type="submit">
+     </form>
+     <input type="radio" name="" value="">:在单选的name属性中，指定单选标识，用来确定哪几个选项需要单选。具有相同name的是一组单选值,在选定后，value是数据值，发送的方式会是name=value的形式。
+   </body>
+   </html>
+   ```
+
+   ​

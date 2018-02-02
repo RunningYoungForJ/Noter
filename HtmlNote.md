@@ -340,4 +340,244 @@
    </html>
    ```
 
-   ​
+
+## Lesson3
+
+> 学习form表单的另外两种input用法、css样式的导入方式以及css样式选择器。
+
+### HTML部分
+
+1. form单选框
+
+   - type属性：设置属性值为radio表示该input输入框是单选输入框。
+   - name属性：标识某几个input元素是一组单选。
+   - value属性：设置单选值，当用户选择后，以？name=value的形式发送该数据。
+
+   ```html
+   <form method="get" action="">
+       <!-- 单选框 -->
+       <h1>Choose your favourite fruit!</h1>
+         1.apple<input type="radio" name="fruit" value="apple">
+         2.orange<input type="radio" name="fruit" value="orange">
+         3.banana<input type="radio" name="fruit" value="banana">
+     </form>
+   ```
+
+2. form复选框：与单选框的用法相同，只是type值不一样。
+
+   - type属性设置为checkbox，表示该input输入框是复选输入框。
+
+   ```html
+   <form method="get" action="">
+         <!-- 复选框 -->
+         1.apple<input type="checkbox" name="fruit" value="apple">
+         2.orange<input type="checkbox" name="fruit" value="orange">
+         3.banana<input type="checkbox" name="fruit" value="banana">
+     </form>
+   ```
+
+3. form输入框默认选中
+
+   - 在input标签的checked属性中，设置checked=“checked”来标识该input为默认选中。
+   - 单选框、复选框都使用相同的方式。
+
+   ```html
+   <form method="get" action="">
+       <!-- 默认选中 -->
+         在input标签中，使用checked属性来设置默认选中。
+       <h1>Choose your sex!!!</h1>
+         male:<input type="radio" name="sex" value="male" checked="checked">
+         female:<input type="radio" name="sex" value="female">
+     </form>
+   ```
+
+4. form下拉菜单
+
+   - 下拉菜单使用select标签，并在select标签内使用option子标签来表示每一个下拉选项。
+   - select中name属性：声明该下拉菜单的数据名是什么，如下，数据名是province。
+   - option中value属性：声明每一个下拉选项的数据值是什么事，如下，有北京等。
+   - 在option之间的内容是显示在页面上的内容，并不是最后的选中值，具体选的什么以value为准。
+
+   > 在option标签中，如果有value属性，那么下拉选项的最后结果以value为准，但在显示在页面上，会以option之间包裹的内容为主。
+
+   ```html
+   <form method="get" action="">
+       <!-- 下拉菜单功能
+       在option标签中，如果有value属性，那么下拉选项的最后结果以value为准，但在显示在页面上，会以option之间包裹的内容为主。 -->
+       <h1>Province</h1>
+       <select name="province">
+         <option value="北京">北京</option>
+         <option  value="xxx">上海</option>
+         <option>天津</option>
+         <option>南京</option>
+       </select>
+         <input type="submit">
+     </form>
+   ```
+
+### CSS部分
+
+> html结构、css样式、javascript行为。
+>
+> css：cascading style sheet，层叠样式表。
+
+1. 引入css的三种方式
+
+   - 行间样式：直接在对应标签中使用style属性设置css样式。
+
+   ```html
+   <div style="
+         width: 100px;
+         height: 100px;
+         background-color: red;
+       ">
+   </div>
+   ```
+
+   - 页面级css样式：在head中使用style标签写css代码，然后引入到body的相应位置。
+
+   ```html
+   <!DOCTYPE html>
+   <html>
+     <head>
+       <title>Document</title>
+       <style type="text/css">
+         div{
+           width: 100px;
+           height: 100px;
+           background-color: green;
+         }
+       </style>
+     </head>
+     <body>
+           <div></div>
+     </body>
+   </html>
+   ```
+
+   - 外部css文件：在外部编写css代码，并在html的head部分的link标签中，导入该css文件。
+
+     > 在link标签中，href属性用来指向需要的css样式。如果该css样式与当前HTML在同一个文件夹下，那么直接使用相对路径就好。如果不在同一路径下，必须使用绝对路径来表明该css文件。
+     >
+     > link标签类似一个import作用。
+
+     ```html
+     <!DOCTYPE html>
+     <html>
+       <head>
+         <title>Document</title>
+         <link rel="stylesheet" type="text/css" href="lesson3.css">
+       </head>
+       <body>
+             <div></div>
+       </body>
+     </html>
+     ```
+
+     外部css文件使用后缀css来标识。
+
+     ```css
+     div{
+       width: 100px;
+       height: 100px;
+       border-radius: 50%;
+       background-color: black;
+     }
+     ```
+
+2. css选择器
+
+   - id选择器：在标签中使用id来做为该标签的唯一标识，并在对应的css文件中，使用#+id名的方式来设置对应id的css样式。一个元素只能有一个id。
+
+   ```html
+   <div id="only"></div>-->
+
+   外部css文件：id选择器
+   #only{
+     width: 100px;
+     height: 100px;
+     border-radius: 50%;
+     background-color: black;
+   }
+   ```
+
+   - class选择器：在标签元素中哦使用class属性来设置对应的class名。class选择器与元素是多对多的关系，一个class可以对应多个元素，一个元素也可以对应多个class。在css文件中，使用.+class名来设置对应元素的css样式。
+
+   ```html
+   <div class="demo"></div>
+   <div class="demo demo1"></div>-->
+
+   外部css文件：class选择器
+   .demo{
+     width: 100px;
+     height: 100px;
+     border-radius: 50%;
+     background-color: red;
+   }
+
+   .demo1{
+     width: 100px;
+     height: 100px;
+     border-radius: 50%;
+     background-color: yellow;
+   }
+   ```
+
+   - 标签选择器：直接使用元素标签做为css样式的对应标志。 无论标签嵌套了多少次，使用标签选择器都可以对应到所有的标签上,如下，两个span标签都可以被css样式作用。
+
+   ```html
+   <div></div>
+   <span>123</span>
+   <div>
+       <span>123</span>
+   </div>
+
+   外部css文件：标签选择器
+   div{
+     width: 100px;
+     height: 100px;
+     border-radius: 50%;
+     background-color: black;
+   }
+   span{
+     background-color: red;
+   }
+   ```
+
+   - 通配符选择器：*作为css样式的标识 ,使用星号会成为全局css选择器，任何标签都会被作用css样式。
+
+   ```html
+   <span>123</span>
+   <div>123</div>
+   <strong>123</strong>
+
+   外部css文件：通配符选择器
+   *{
+     background-color: yellow;
+   }
+   ```
+
+   - 属性选择器：包含某一属性的标签都会被相应的css样式作用，属性名定义在[]中。
+
+   ```html
+   <div id="only" class="demo"></div>
+   外部css文件：属性选择器
+   [id]{
+       background-color: yellow;
+   }
+   ```
+
+   > 在div标签中，有id和class两个属性，在外部css文件中，定义了[id]属性的css样式，因此，会在div标签中作用该css样式。
+
+3. css权重
+
+   > css权重值的计算是以256进制计算的。
+
+   - ！important：无穷大
+   - 行间样式：1000
+   - id：100
+   - class、属性、伪类：10
+   - 标签、伪元素：1
+   - 通配符：0
+
+   > 计算机里，无穷大+1>无穷大。

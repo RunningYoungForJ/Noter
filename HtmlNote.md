@@ -752,3 +752,363 @@ div{
 钻石：darryRing
 ```
 
+## Lesson4
+
+> 学习CSS的其它几种选择器，以及CSS常用属性介绍。
+
+1. 父子选择器/派生选择器
+
+   在HTML页面中，父元素和子元素之间的包含关系可以用在CSS样式设计中。在父子选择器中，使用父子元素中具有标识能力的id、class、标签名称等作为CSS样式的定位信息，父子标识之间用空格分隔。
+
+   ```html
+   <div>
+       <span>
+         123
+       </span>
+    </div>
+   ```
+
+   在上图HTML代码中，考虑如何使用父子选择器。这里，我们使用元素标签来定位每一层。
+
+   ```css
+   div span{
+     background-color: red;
+   }
+   ```
+
+   CSS部分表示div标签下的所有span子标签元素都会被渲染为红色背景。
+
+   > 父子选择器的每一层都不一定非要是标签，id、class都可以作为父子级别。
+   >
+   > 此外，父子选择器并不只查找具有直接父子关系的元素，只要是在父元素中包含的，都会被确定为子元素。
+
+   ```html
+   <div>
+       <em>1</em>
+       <strong>
+         <em>2</em>
+       </strong>
+   </div>
+   ```
+
+   ```css
+   div em{
+     background-color: red;
+   }
+   ```
+
+   在div em标识下，div.em和div.strong.em都会被渲染为红色背景。如果需求仅仅作用于直接子元素，则应使用>号代替空格。
+
+   ```css
+   div > em{
+     background-color: red;
+   }
+   ```
+
+   这样，就表示div下的直接子元素em会被CSS作用，而间接子元素保持原样。
+
+   > 注意：浏览器引擎遍历父子选择器的顺序是从右向左。
+
+2. 并列选择器
+
+   > 用多个限制元素标识同一个元素，并且不加空格写在一起。
+
+   思考如何只对2进行修饰。
+
+   ```html
+   <div>1</div>
+   <div class="demo">2</div>
+   <p class="demo">3</p>
+   ```
+
+   如何直接使用标签选择器或者class选择器，前者会作用1和2，后者会作用2和3，都不能满足需求。
+
+   ```css
+   div.demo{
+     background-color: red;
+   }
+   ```
+
+   观察需要渲染的元素，可以发现，它能够同时通过div+class=demo来定位，因此，这里采用的定位方式就是并列选择器。使用多个条件，不加空格组合在一起，就能够定位该元素。
+
+3. 选择器权重计算
+
+   HTML部分
+
+   ```html
+   <div class="classDiv" id="idDiv">
+       <p class="classP" id="idP">1</p>
+   </div>
+   ```
+
+   CSS部分
+
+   ```css
+   #idDiv p{
+     background-color: red;
+   }
+
+   .classDiv .classP{
+     background-color: green;
+   }
+   ```
+
+   > 思考会作用哪一个CSS样式？
+
+   两个CSS样式都可以定位到上述的HTML代码。在这样的情况下，浏览器引擎会去计算每一个CSS样式的权重。第一个CSS样式的权重为100+1=101，第二个CSS样式的权重是10+1=11.因此，会选择第一个CSS样式。
+
+   > 只要写在同一排的选择器，就把它们的权重值相加即可，不必在意这一行的选择器是否重复描述。
+   > 如果权重值一样，则以最后的样式为主，后面的样式会覆盖前面权重值一样的样式。
+
+4. 分组选择器
+
+   > 多用来提高开发效率。如果多个元素采用同样的样式，则可以将它们统一写成一个，而不用分开单独编写各自的CSS样式。
+
+   使用逗号分隔不同元素，给不同元素设置相同的样式。
+
+   HTML部分
+
+   ```Html
+   <em>1</em>
+   <strong>2</strong>
+   <span>3</span>
+   ```
+
+   CSS部分
+
+   ```css
+   em,strong,span{
+     background-color: red;
+   }
+   ```
+
+   等价于
+
+   ```css
+   em{
+     background-color: red;
+   }
+   strong{
+     background-color: red;
+   }
+   span{
+     background-color: red;
+   }
+   ```
+
+5. CSS常见属性
+
+   > 查阅CSS属性可以访问：[css88](http://www.css88.com/book/css/)
+
+   HTML部分
+
+   ```html
+     <div>举个例子</div>
+   ```
+
+   CSS部分
+
+   ```css
+   div{
+     font-size: 50px;
+     font-weight: bold;/*lighter normal bold bolder*/
+     font-style: italic;
+     font-family: arial;/*arial是乔布斯发明的*/
+     color: green;/*设置字体颜色只有color，没有font-color*/
+     border: 10px solid black;/*给容器加一个外边框*/
+   }
+   ```
+
+   - font-size：设置字体大小。
+
+   > css代码写在大括号内，代码由属性名：属性值构成，多个属性之间分号相隔。
+   > 注意：任何设置字体都是设置字体的高。
+
+   - font-weight：设置字体粗细。常见的属性值有lighter、normal、bold、bolder。
+
+   > 在设置字体粗细的时候，font-weight仅仅是用来说明期望的粗细。
+   > 但浏览器在最后渲染的时候，需要在当前字体的字体包中查找有没有对应font-weight值，如果没有，也不会进行修改。
+   >
+   > strong所用的加粗样式就是用的font-weight=bold
+   > 类似，em用的斜体样式就是font-style=italic。
+
+   - font-style：设置斜体样式。
+   - font-family：设置字体 ，宋体、雅黑等。
+   - color：设置字体颜色，没有font-color一说。
+
+   > 设置颜色的方式：
+   >
+   > 1. 英文单词
+   > 2. 颜色代码
+   > 3. 颜色函数
+   >
+   > 在CSS中，使用十六进制描述颜色。以三原色RGB为基础，每两位表示一种原色。此外，如果每两位重复的话，可以缩写为一位，例如#ff4400=#f40
+   >
+   > - R：00-ff
+   > - G：00-ff
+   > - B：00-ff
+
+   - border：是一个复合属性，给元素加一个外边框。
+
+   > border是一个复合属性，=border-width+border-style+border-color
+   > 每一个border边可以单独设置，每一个边同样是一个复合属性
+   > 画三角形通过border来画，分别设置它的四条边的属性。
+
+6. Lesson4学习代码
+
+   HTML部分
+
+   ```html
+   <!DOCTYPE html>
+   <html>
+   <head>
+     <meta charset="utf-8">
+     <title></title>
+     <link rel="stylesheet" type="text/css" href="lesson4.css">
+   </head>
+   <body>
+     <!-- <div>
+       <span>
+         123
+       </span>
+     </div>
+     <span>
+       234
+     </span> -->
+     <!-- <div>
+       <em>1</em>
+       <strong>
+         <em>2</em>
+       </strong>
+     </div> -->
+     <!-- <div>1</div>
+     <div class="demo">2</div>
+     <p class="demo">3</p> -->
+
+     <!-- <div class="classDiv" id="idDiv">
+       <p class="classP" id="idP">1</p>
+     </div> -->
+
+     <!-- <em>1</em>
+     <strong>2</strong>
+     <span>3</span> -->
+     <div>举个例子</div>
+   <!--   <strong>举个例子</strong>-->
+   </body>
+   </html>
+   ```
+
+   CSS部分
+
+   ```css
+   父子选择器／派生选择器
+   如下表示：div下的span颜色设置为红色
+   父子选择器的每一层都不一定非要是标签，id、class都可以作为父子级别
+   */
+   div span{
+     background-color: red;
+
+   }
+
+   /*
+   div下的直接子em和间接子em等都会变成红色
+
+   div em{
+     background-color: red;
+   }*/
+
+   /*
+   >表示直接子元素选择器
+   */
+   div > em{
+     background-color: red;
+   }
+
+   /*浏览器遍历父子选择器的顺序是从右向左。*/
+
+   /*并列选择器*/
+   div.demo{
+     background-color: red;
+   }
+
+   /*
+   会选择#idDiv p样式，因为它的权重总值大于#classDiv #classP
+   只要写在同一排的选择器，就把它们的权重值相加即可，不必在意这一行的选择器是否重复描述。
+   如果权重值一样，则以最后的样式为主，后面的样式会覆盖前面权重值一样的样式。
+   */
+   #idDiv p{
+     background-color: red;
+   }
+
+   .classDiv .classP{
+     background-color: green;
+
+   }
+   /*
+   分组选择器
+   使用逗号给不同元素设置同样的样式
+   */
+   /*em,strong,span{
+     background-color: red;
+   }*/
+   /*等价于
+   em{
+     background-color: red;
+   }
+   strong{
+     background-color: red;
+   }
+   span{
+     background-color: red;
+   }*/
+
+   /*css基础*/
+
+   /*
+   查阅css样式属性，可以访问：http://www.css88.com/book/css/
+   */
+
+   div{
+     font-size: 50px;
+     font-weight: bold;/*lighter normal bold bolder*/
+     font-style: italic;
+     font-family: arial;/*arial是乔布斯发明的*/
+     color: green;/*设置字体颜色只有color，没有font-color*/
+     border: 10px solid black;/*给容器加一个外边框*/
+   }
+
+   /*
+   border是一个复合属性，=border-width+border-style+border-color
+   每一个border边可以单独设置，每一个边同样是一个复合属性
+   画三角形通过border来画，分别设置它的四条边的属性
+   */
+   /*
+   设置颜色的方法：
+   1. 英文单词
+   2. 颜色代码
+       每两位代表一个颜色，#ff4400
+       r：00-ff、g：00-ff、b：00-ff
+       每两位重复的话，可以简写为一个，#ff4400=#f40
+   3. 颜色函数
+   */
+
+   /*
+   在设置字体粗细的时候，font-weight仅仅是用来说明期望的粗细。
+   但浏览器在最后渲染的时候，需要在当前字体的字体包中查找有没有对应font-weight值，如果没有，也不会进行修改
+   */
+   /*
+   css代码写在大括号内，代码由属性名：属性值构成，多个属性之间分号相隔
+   设置字体是设置字体的高
+   */
+
+   strong{
+     font-size: 50px;
+   }
+   /*
+   strong所用的加粗样式就是用的font-weight=bold
+   类似，em用的斜体样式就是font-style=italic
+   ```
+
+   ​
+
+   ​

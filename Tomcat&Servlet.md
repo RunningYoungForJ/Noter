@@ -142,5 +142,43 @@ Web服务器使用HTTP协议来跟客户端进行通信。一个基于Java的Web
 
 > 服务端套接字
 
+服务端套接字需要等待客户端的请求，一旦服务端套接字获得了一个客户端请求，就会创建一个Socket实例与客户端进行通信。
 
+要创建一个服务器套接字，你需要使用 ServerSocket 类提供的四个构造方法中的一个。你
+需要指定 IP 地址和服务器套接字将要进行监听的端口号。通常，IP 地址将会是 127.0.0.1，也
+就是说，服务器套接字将会监听本地机器。服务器套接字正在监听的 IP 地址被称为是绑定地址。
+服务器套接字的另一个重要的属性是 backlog，这是服务器套接字开始处理传入的请求之前，传
+入的连接请求的最大队列长度。
+
+```java
+public ServerSocket(int port, int backLog, InetAddress bindingAddress);
+new ServerSocket(8080, 1, InetAddress.getByName("127.0.0.1"));
+```
+
+- ServerSocket示例
+
+  ```java
+  public class Server {  
+    
+      public static void main(String[] args) throws Exception{  
+            
+          // port:8888,backlog:5  
+          ServerSocket server = new ServerSocket(8888, 5);  
+            
+          int acceptCount = 0;  
+            
+          while(true)  
+          {  
+              Socket client = server.accept();  
+                 
+              acceptCount++;  
+                 
+               System.out.println("new connection has connected, num=" + acceptCount);  
+          }  
+                 
+      }  
+  }  
+  ```
+
+  accept方法：从客户端socket发起的请求连接中选择一个，并建立与服务端的连接。backlog维护了客户端请求等待队列的大小。
 

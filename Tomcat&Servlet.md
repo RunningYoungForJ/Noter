@@ -182,3 +182,476 @@ new ServerSocket(8080, 1, InetAddress.getByName("127.0.0.1"));
 
   accept方法：从客户端socket发起的请求连接中选择一个，并建立与服务端的连接。backlog维护了客户端请求等待队列的大小。
 
+## 一个简单的Servlet容器
+
+> Servlet 编程是通过 javax.servlet 和 javax.servlet.http 这两个包的类和接口来实现的。
+> 其中一个至关重要的就是 javax.servlet.Servlet 接口了。**所有的 servlet 必须实现实现或者继**
+> **承实现该接口的类。**
+
+### javax.servlet.Servlet
+
+Servlet接口有五个方法
+
+```java
+public void init(ServletConfig config) throws ServletException
+public void service(ServletRequest request, ServletResponse response)
+throws ServletException, java.io.IOException 
+public void destroy()
+public ServletConfig getServletConfig()
+public java.lang.String getServletInfo()
+```
+
+init、service、destory方法是Servlet生命周期的方法。
+
+- 在Servlet容器初始化后，init方法将会在Servlet请求第一次访问的时候被调用，而且在整个生命周期中只调用这一次，将对应的Servlet实现类的class文件加载到Servlet容器中。
+- Servlet容器使用service方法处理Servlet请求，每一个Servlet请求进入容器后，都会由容器传递一个javax.servlet.ServletRequest 对象和 javax.servlet.ServletResponse 对象。ServletRequest 对象包括客户端的 HTTP 请求信息，而 ServletResponse 对象封装 servlet 的响应。在 servlet 的生命周期中，service 方法将会给调用多次。
+- destory方法发生在Servlet容器关闭的时候。
+
+### 一个简单的Servlet容器需要做的事情
+
+正如在第一章中所描述的那样，Tomcat（Servlet）所具有的功能，简单说来，就是以下几个：
+
+1. 接收请求，封装为ServletRequest和ServletResponse
+2. 调用对应Servlet实现类的service方法处理
+
+基于这样的功能，我们可以整理出一个简单的实现过程，如下：
+
+- 能够接收请求，基于java提供的SeverSocket类，监听某一host地址的某一端口，如果有请求，则调用accpet方法建立连接，并处理请求。
+
+  ```java
+  package cxs02.pyrmont;
+  
+  import java.net.Socket;
+  import java.net.ServerSocket;
+  import java.net.InetAddress;
+  import java.io.InputStream;
+  import java.io.OutputStream;
+  import java.io.IOException;
+  
+  public class HttpServer1 {
+  
+    /** WEB_ROOT is the directory where our HTML and other files reside.
+     *  For this package, WEB_ROOT is the "webroot" directory under the working
+     *  directory.
+     *  The working directory is the location in the file system
+     *  from where the java command was invoked.
+     */
+    // shutdown command,关闭ServerSocket连接
+    private static final String SHUTDOWN_COMMAND = "/SHUTDOWN";
+  
+    // the shutdown command received
+    private boolean shutdown = false;
+  
+    public static void main(String[] args) {
+      HttpServer1 server = new HttpServer1();
+      //启动服务端监听
+      server.await();
+    }
+  
+    public void await() {
+      ServerSocket serverSocket = null;
+      int port = 8080;
+      try {
+        //创建一个本地127.0.0.1:8080端口的服务端地址
+        serverSocket =  new ServerSocket(port, 1, InetAddress.getByName("127.0.0.1"));
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+        System.exit(1);
+      }
+  
+      // Loop waiting for a request
+      while (!shutdown) {
+        Socket socket = null;
+        InputStream input = null;
+        OutputStream output = null;
+        try {
+          //accpet会监听请求（客户端socket请求），并建立连接
+          socket = serverSocket.accept();
+          //获取服务端接收到的数据（客户端socket传入的）
+          input = socket.getInputStream();
+          //获取服务端发送的数据（客户端socket要接收的）
+          output = socket.getOutputStream();
+  
+          // 构建一个ServletResquest实现类的实例
+          Request request = new Request(input);
+          request.parse();
+  
+          // 构建一个ServletResponse实现类的实例
+          Response response = new Response(output);
+          response.setRequest(request);
+  
+          // check if this is a request for a servlet or a static resource
+          // a request for a servlet begins with "/servlet/"
+          //如果是/servlet开头的url，交给Servlet实现类去处理
+          if (request.getUri().startsWith("/servlet/")) {
+            ServletProcessor1 processor = new ServletProcessor1();
+            processor.process(request, response);
+          }
+          else {
+            StaticResourceProcessor processor = new StaticResourceProcessor();
+            processor.process(request, response);
+          }
+  
+          // Close the socket
+          socket.close();
+          //check if the previous URI is a shutdown command
+          shutdown = request.getUri().equals(SHUTDOWN_COMMAND);
+        }
+        catch (Exception e) {
+          e.printStackTrace();
+          System.exit(1);
+        }
+      }
+    }
+  }
+  ```
+
+- 实现ServletResquest，用于封装Servlet请求
+
+  ```java
+  package  cxs02.pyrmont;
+  
+  import java.io.InputStream;
+  import java.io.IOException;
+  import java.io.BufferedReader;
+  import java.io.UnsupportedEncodingException;
+  import java.util.Enumeration;
+  import java.util.Locale;
+  import java.util.Map;
+  import javax.servlet.RequestDispatcher;
+  import javax.servlet.ServletInputStream;
+  import javax.servlet.ServletRequest;
+  
+  
+  public class Request implements ServletRequest {
+  
+    private InputStream input;
+    private String uri;
+  
+    public Request(InputStream input) {
+      this.input = input;
+    }
+  
+    public String getUri() {
+      return uri;
+    }
+  
+    private String parseUri(String requestString) {
+      int index1, index2;
+      index1 = requestString.indexOf(' ');
+      if (index1 != -1) {
+        index2 = requestString.indexOf(' ', index1 + 1);
+        if (index2 > index1)
+          return requestString.substring(index1 + 1, index2);
+      }
+      return null;
+    }
+  
+    public void parse() {
+      // Read a set of characters from the socket
+      StringBuffer request = new StringBuffer(2048);
+      int i;
+      byte[] buffer = new byte[2048];
+      try {
+        i = input.read(buffer);
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+        i = -1;
+      }
+      for (int j=0; j<i; j++) {
+        request.append((char) buffer[j]);
+      }
+      System.out.print(request.toString());
+      uri = parseUri(request.toString());
+    }
+  
+    /* implementation of the ServletRequest*/
+    public Object getAttribute(String attribute) {
+      return null;
+    }
+  
+    public Enumeration getAttributeNames() {
+      return null;
+    }
+  
+    public String getRealPath(String path) {
+      return null;
+    }
+  
+    public RequestDispatcher getRequestDispatcher(String path) {
+      return null;
+    }
+  
+    public boolean isSecure() {
+      return false;
+    }
+  
+    public String getCharacterEncoding() {
+      return null;
+    }
+  
+    public int getContentLength() {
+      return 0;
+    }
+  
+    public String getContentType() {
+      return null;
+    }
+  
+    public ServletInputStream getInputStream() throws IOException {
+      return null;
+    }
+  
+    public Locale getLocale() {
+      return null;
+    }
+  
+    public Enumeration getLocales() {
+      return null;
+    }
+  
+    public String getParameter(String name) {
+      return null;
+    }
+  
+    public Map getParameterMap() {
+      return null;
+    }
+  
+    public Enumeration getParameterNames() {
+      return null;
+    }
+  
+    public String[] getParameterValues(String parameter) {
+      return null;
+    }
+  
+    public String getProtocol() {
+      return null;
+    }
+  
+    public BufferedReader getReader() throws IOException {
+      return null;
+    }
+  
+    public String getRemoteAddr() {
+      return null;
+    }
+  
+    public String getRemoteHost() {
+      return null;
+    }
+  
+    public String getScheme() {
+     return null;
+    }
+  
+    public String getServerName() {
+      return null;
+    }
+  
+    public int getServerPort() {
+      return 0;
+    }
+  
+    public void removeAttribute(String attribute) {
+    }
+  
+    public void setAttribute(String key, Object value) {
+    }
+  
+    public void setCharacterEncoding(String encoding)
+      throws UnsupportedEncodingException {
+    }
+  
+  }
+  ```
+
+- 实现ServletResponse，用于封装Servlet响应
+
+  ```java
+  package cxs02.pyrmont;
+  
+  import java.io.File;
+  import java.io.FileInputStream;
+  import java.io.FileNotFoundException;
+  import java.io.IOException;
+  import java.io.OutputStream;
+  import java.io.PrintWriter;
+  import java.util.Locale;
+  import javax.servlet.ServletOutputStream;
+  import javax.servlet.ServletResponse;
+  
+  public class Response implements ServletResponse {
+  
+    private static final int BUFFER_SIZE = 1024;
+    Request request;
+    OutputStream output;
+    PrintWriter writer;
+  
+    public Response(OutputStream output) {
+      this.output = output;
+    }
+  
+    public void setRequest(Request request) {
+      this.request = request;
+    }
+  
+    /* This method is used to serve a static page */
+    public void sendStaticResource() throws IOException {
+      byte[] bytes = new byte[BUFFER_SIZE];
+      FileInputStream fis = null;
+      try {
+        /* request.getUri has been replaced by request.getRequestURI */
+        File file = new File(Constants.WEB_ROOT, request.getUri());
+        fis = new FileInputStream(file);
+        /*
+           HTTP Response = Status-Line
+             *(( general-header | response-header | entity-header ) CRLF)
+             CRLF
+             [ message-body ]
+           Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
+        */
+        int ch = fis.read(bytes, 0, BUFFER_SIZE);
+        while (ch != -1) {
+          output.write(bytes, 0, ch);
+          ch = fis.read(bytes, 0, BUFFER_SIZE);
+        }
+      } catch (FileNotFoundException e) {
+        String errorMessage = "HTTP/1.1 404 File Not Found\r\n" +
+            "Content-Type: text/html\r\n" +
+            "Content-Length: 23\r\n" +
+            "\r\n" +
+            "<h1>File Not Found</h1>";
+        output.write(errorMessage.getBytes());
+      } finally {
+        if (fis != null) {
+          fis.close();
+        }
+      }
+    }
+  
+  
+    /**
+     * implementation of ServletResponse
+     */
+    public void flushBuffer() throws IOException {
+    }
+  
+    public int getBufferSize() {
+      return 0;
+    }
+  
+    public String getCharacterEncoding() {
+      return null;
+    }
+  
+    public Locale getLocale() {
+      return null;
+    }
+  
+    public ServletOutputStream getOutputStream() throws IOException {
+      return null;
+    }
+  
+    public PrintWriter getWriter() throws IOException {
+      // autoflush is true, println() will flush,
+      // but print() will not.
+      writer = new PrintWriter(output, true);
+      return writer;
+    }
+  
+    public boolean isCommitted() {
+      return false;
+    }
+  
+    public void reset() {
+    }
+  
+    public void resetBuffer() {
+    }
+  
+    public void setBufferSize(int size) {
+    }
+  
+    public void setContentLength(int length) {
+    }
+  
+    public void setContentType(String type) {
+    }
+  
+    public void setLocale(Locale locale) {
+    }
+  }
+  ```
+
+- Servlet请求最后交给Servlet实现类的service方法去处理，因此，需要根据ServletName来反射创建Servlet实现类，并执行service方法。
+
+  ```java
+  package cxs02.pyrmont;
+  
+  import java.io.File;
+  import java.io.IOException;
+  import java.net.URL;
+  import java.net.URLClassLoader;
+  import java.net.URLStreamHandler;
+  import javax.servlet.Servlet;
+  import javax.servlet.ServletRequest;
+  import javax.servlet.ServletResponse;
+  
+  public class ServletProcessor1 {
+  
+    public void process(Request request, Response response) {
+  
+      String uri = request.getUri();
+      String servletName = uri.substring(uri.lastIndexOf("/") + 1);
+      URLClassLoader loader = null;
+  
+      try {
+        // create a URLClassLoader
+        //生成一个类加载器
+        URL[] urls = new URL[1];
+        URLStreamHandler streamHandler = null;
+        File classPath = new File(Constants.WEB_ROOT);
+        // the forming of repository is taken from the createClassLoader method in
+        // org.apache.catalina.startup.ClassLoaderFactory
+        String repository = (new URL("file", null, classPath.getCanonicalPath() + File.separator))
+            .toString();
+        // the code for forming the URL is taken from the addRepository method in
+        // org.apache.catalina.loader.StandardClassLoader class.
+        urls[0] = new URL(null, repository, streamHandler);
+        loader = new URLClassLoader(urls);
+      } catch (IOException e) {
+        System.out.println(e.toString());
+      }
+      Class myClass = null;
+      try {
+        //使用类加载器，根据ServletName反射出Servlet实现类class
+        myClass = loader.loadClass(servletName);
+      } catch (ClassNotFoundException e) {
+        System.out.println(e.toString());
+      }
+  
+      Servlet servlet = null;
+  
+      try {
+        //反射获取Servlet实现类实例
+        servlet = (Servlet) myClass.newInstance();
+        //调用Servlet实现类实例的service方法，处理Servlet请求
+        servlet.service((ServletRequest) request, (ServletResponse) response);
+      } catch (Exception e) {
+        System.out.println(e.toString());
+      } catch (Throwable e) {
+        System.out.println(e.toString());
+      }
+  
+    }
+  }
+  ```
+
+## 连接器是个什么东西
+
+
+

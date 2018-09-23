@@ -30,6 +30,146 @@ Catalina是Tomcat容器下的最外层组件，Catalina可以看作是由两个�
 2. Connectors的主要职责是接收HTTPServlet请求，并构造成一个request和response对象，并将这两个对象传递给Container。
 3. Container接收到request和response对象后，调用该请求映射的某个Servlet子类的service方法来处理HttpServlet请求。
 
+## Servlet
+
+### Servlet生命周期
+
+> Tomcat服务器启动后，项目的web.xml加载进内存，但xml中具体内容的解析并不是在启动时就执行。
+
+生命周期：Servlet初始化（init）--->Servlet销毁（destory）
+
+1. Servlet初始化：当第一次请求发生时，Servlet加载进内存时，只执行一次init方法。（在整个Servlet生命周期中，init方法只会执行一次，当且仅当对应的第一次请求发生时）
+2. Servlet销毁：Tomcat服务器关闭时，执行所有Servlet的destory方法，销毁Servlet。
+
+### 提前初始化（load-on-startup）
+
+如果Servlet在web.xml中配置了load-on-startup，则Servlet生命周期为Tomcat服务器启动掉关闭，其中load-on-startup的参数仅仅影响Tomcat服务器启动时Servlet的初始化加载顺序。
+
+### service、doGet、doPost方法
+
+> 都是HttpServlet类中的方法。
+
+1. service方法既可以处理Get，又可以处理Post请求。
+2. doGet方法处理Get请求。
+3. doPost方法处理Post请求，如果Servlet请求的请求方法与url映射的Servlet方法请求方式不一样，会报405错误。
+4. 如果在Servlet类中，如果同时重写了service、doGet、doPost方法，都会优先执行service方法，然后根据请求方式，执行doGet或doPost方法。（如果在service中调用了父类的service方法，super.service，没有super.service方法的话，就只会执行service）
+
+### 常见的请求错误
+
+| 错误代码 | 含义            | 原因                                                         |
+| -------- | --------------- | ------------------------------------------------------------ |
+| 404      | 资源未找到      | url地址错误，在web.xml中找不到请求url对应的servlet请求       |
+| 500      | class not found | 1. 在web.xml中url对应的Servlet类路径错误<br />2. 对应请求的service方法逻辑错误 |
+| 405      | 请求方式不支持  | Servlet请求方式与Servlet类的对应方法不匹配                   |
+
+### HttpServletRequest请求
+
+Tomcat服务器每接收一个请求，就创建一个Request对象来存储请求的所有数据，并将Request对象传递给service方法处理。
+
+#### ServletRequest请求乱码
+
+> 浏览器默认的数据编码格式是ISO-8859-1，后台服务一般的编码是UTF-8。
+
+1. 使用String进行重新编码。
+
+   - 先使用浏览器的默认编码格式进行解码
+   - 然后使用服务端的默认编码进行编码。
+
+   ```java
+   new String(str.getBytes("iso-8859-1"),"utf-8")
+   ```
+
+
+
+#### Session概念
+
+
+
+### Servlet处理文件上传
+
+> Servlet与HTML form表单一起使用，支持上传文件/图像到服务器。
+
+需要注意的是：
+
+- 表单method方法应该是POST
+- 表单enctype应该是multipart/form-data
+- 表单action应该是后端负责处理上传逻辑的Servlet文件
+
+文件上传需要依赖apache-common的两个jar包：
+
+- commons-fileupload-1.3.3.jar
+- commons-io-2.6.jar
+
+因为Servlet是运行在Tomcat服务器下，因此程序需要的额外jar包也只能放在Tomcat服务器lib下，放在磁盘其它地方，会报ClassNotFound错误。
+
+```java
+@WebServlet(name = "FileUploadServlet")
+public class FileUploadServlet extends HttpServlet {
+    private boolean isMultipart;
+    private String filePath;
+    private File file;
+
+    @Override
+    public void init() throws ServletException {
+        this.filePath=getServletContext().getInitParameter("file-upload");
+    }
+
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //获取请求的enctype类型
+        isMultipart= ServletFileUpload.isMultipartContent(req);
+        resp.setContentType("text/html");
+        PrintWriter toBrowser=resp.getWriter();
+        if (isMultipart){
+            //创建数据流处理工厂-作用是封装数据流为一个FileItem对象
+            DiskFileItemFactory diskFactory=new DiskFileItemFactory();
+            //创建上传Servlet服务
+            ServletFileUpload servletFileUpload=new ServletFileUpload(diskFactory);
+            try {
+                //使用factory封装上传文件的数据流，并保存在临时路径下，即DiskFileItemFactory的repository属性
+                //如果有多个文件同时上传，则处理多个
+                List<FileItem> fileItems = servletFileUpload.parseRequest(req);
+                Iterator it=fileItems.iterator();
+                toBrowser.println("<html>");
+                toBrowser.println("<head>");
+                toBrowser.println("<title>Servlet upload</title>");
+                toBrowser.println("</head>");
+                toBrowser.println("<body>");
+                while (it.hasNext()){
+                    //获取每一个文件对象
+                    FileItem item=(FileItem)it.next();
+                    String fieldName=item.getFieldName();
+                    String fileName=item.getName();
+                    String contentType=item.getContentType();
+                    boolean isInMemory=item.isInMemory();
+                    long sizeByBytes = item.getSize();
+                    file=new File(filePath+fileName);
+                    //将上传文件写入指定路径file内
+                    item.write(file);
+                    toBrowser.println("Uploaded Filename: " + fileName + "<br>");
+                }
+                toBrowser.println("</body>");
+                toBrowser.println("</html>");
+            }catch (Exception e){
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Web服务器
 
 > 超文本传输协议（HTTP）服务器
@@ -653,5 +793,6 @@ init、service、destory方法是Servlet生命周期的方法。
 
 ## 连接器是个什么东西
 
-
+一个符合规范的连接器必须创建javax.servlet.http.HttpServletRequest 和
+javax.servlet.http.HttpServletResponse，并传递给被调用的 servlet 的 service 方法。
 
